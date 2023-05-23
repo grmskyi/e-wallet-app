@@ -1,12 +1,12 @@
 package com.api.ewalletTask.services.impl;
 
 
-import com.api.ewalletTask.Exceptions.CustomerBlockedException;
-import com.api.ewalletTask.Exceptions.CustomerNotBlockedException;
-import com.api.ewalletTask.Exceptions.CustomerNotFoundException;
+import com.api.ewalletTask.Exceptions.BaseException;
+import com.api.ewalletTask.dtos.CustomerDTO;
 import com.api.ewalletTask.models.Customer;
 import com.api.ewalletTask.repositories.CustomerRepository;
 import com.api.ewalletTask.services.CustomerService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,26 +20,25 @@ import java.util.Date;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
-    public Customer createOrupdateCustomer(Customer customer) {
-        return customerRepository.save(customer);
+    public CustomerDTO createOrUpdateCustomer(CustomerDTO customerDTO) {
+        Customer customer = objectMapper.convertValue(customerDTO, Customer.class);
+        Customer savedCustomer = customerRepository.save(customer);
+        return objectMapper.convertValue(savedCustomer, CustomerDTO.class);
     }
 
     @Override
     public String deleteCustomer(Long id) {
-        Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found for id: " + id));
-
+        Customer customer = getCustomerById(id);
         customerRepository.delete(customer);
         return "Customer is deleted";
     }
 
     @Override
-    public Customer blockCustomerForWeek(Long customerId) {
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found for id: " + customerId));
-
+    public void blockCustomerForWeek(Long customerId) {
+        Customer customer = getCustomerById(customerId);
         if (Boolean.TRUE.equals(customer.getBlocked())) {
             LocalDateTime blockedUntil = LocalDateTime.now().plusWeeks(1);
             Date blockedUntilDate = convertToDate(blockedUntil);
@@ -49,21 +48,18 @@ public class CustomerServiceImpl implements CustomerService {
             customer.setTimeLeftToUnblock(timeLeft);
             customerRepository.save(customer);
         }
-
-        return customer;
+        convertToCustomerDTO(customer);
     }
 
     @Override
     public void handleBlockedCustomer(Long customerId) {
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found for id: " + customerId));
-
+        Customer customer = getCustomerById(customerId);
         if (Boolean.TRUE.equals(customer.getBlocked())) {
             LocalDateTime blockedUntil = LocalDateTime.now().plusWeeks(1);
             Duration timeLeft = Duration.between(LocalDateTime.now(), blockedUntil);
 
             if (timeLeft.toMinutes() > 0) {
-                throw new CustomerBlockedException("Customer is blocked and cannot make transactions. Blocked duration remaining: " + timeLeft.toMinutes() + " minutes.");
+                throw new BaseException("Customer is blocked and cannot make transactions. Blocked duration remaining: " + timeLeft.toMinutes() + " minutes.");
             } else {
                 if (Boolean.TRUE.equals(customer.getUnblockRequested())) {
                     // Unblock the customer
@@ -72,7 +68,7 @@ public class CustomerServiceImpl implements CustomerService {
                     customer.setUnblockRequested(false);
                     customerRepository.save(customer);
                 } else {
-                    throw new CustomerBlockedException("Customer is blocked. Please request unblocking.");
+                    throw new BaseException("Customer is blocked. Please request unblocking.");
                 }
             }
         }
@@ -80,19 +76,26 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public void requestUnblocking(Long customerId) {
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found for id: " + customerId));
-
+        Customer customer = getCustomerById(customerId);
         if (Boolean.FALSE.equals(customer.getBlocked())) {
-            throw new CustomerNotBlockedException("Customer is not blocked.");
+            throw new BaseException("Customer is not blocked.");
         }
-
         customer.setUnblockRequested(true);
         customerRepository.save(customer);
+    }
+
+    private Customer getCustomerById(Long id) {
+        return customerRepository.findById(id)
+                .orElseThrow(() -> new BaseException("Customer not found for id: " + id));
     }
 
     private Date convertToDate(LocalDateTime dateTime) {
         return Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
+
+    private void convertToCustomerDTO(Customer customer) {
+        objectMapper.convertValue(customer, CustomerDTO.class);
+    }
 }
+
 

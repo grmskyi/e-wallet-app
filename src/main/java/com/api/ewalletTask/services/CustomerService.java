@@ -1,21 +1,14 @@
 package com.api.ewalletTask.services;
 
-import com.api.ewalletTask.models.Customer;
-import com.api.ewalletTask.models.Wallet;
-
-import java.util.List;
+import com.api.ewalletTask.dtos.CustomerDTO;
 
 
 public interface CustomerService {
 
-    Customer createOrupdateCustomer(Customer customer);
-
+    CustomerDTO createOrUpdateCustomer(CustomerDTO customerDTO);
     String deleteCustomer(Long id);
-
-    Customer blockCustomerForWeek(Long customerId);
-
+    void blockCustomerForWeek(Long customerId);
     void handleBlockedCustomer(Long customerId);
-
     void requestUnblocking(Long customerId);
 
 }

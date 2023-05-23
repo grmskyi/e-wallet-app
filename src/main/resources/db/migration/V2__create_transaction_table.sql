@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS transaction_table
 (
-    transaction_id        INT PRIMARY KEY,
+    transaction_id        BIGINT PRIMARY KEY,
     transaction_type      VARCHAR(255)   NOT NULL,
     transaction_timestamp TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     amount                DECIMAL(10, 2) NOT NULL DEFAULT 0.0,

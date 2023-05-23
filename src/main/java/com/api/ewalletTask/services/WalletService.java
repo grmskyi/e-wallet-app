@@ -1,17 +1,17 @@
 package com.api.ewalletTask.services;
 
 
-import com.api.ewalletTask.models.Wallet;
+import com.api.ewalletTask.dtos.WalletDTO;
 
 public interface WalletService {
 
-    Wallet createOrUpdateWallet(Wallet wallet);
+    WalletDTO createOrUpdateWallet(WalletDTO walletDTO);
 
     String deleteWallet(Long id);
 
-    Wallet transferToAnotherCustomer(Long senderCustomerId, Long senderWalletId, Long receiverCustomerId, Long receiverWalletId, Double amount);
+    WalletDTO transferToAnotherCustomer(Long senderCustomerId, Long senderWalletId, Long receiverCustomerId, Long receiverWalletId, Double amount);
 
-    Wallet withdrawFromAccount(Long walletId, Long customerId, Double amount, boolean disableLimit);
+    WalletDTO withdrawFromAccount(Long walletId, Long customerId, Double amount, boolean disableLimit);
 
-    Wallet depositToWallet(Long walletId, Double amount);
+    WalletDTO depositToWallet(Long walletId, Double amount);
 }

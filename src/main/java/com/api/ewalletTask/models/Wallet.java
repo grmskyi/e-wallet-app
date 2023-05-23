@@ -32,7 +32,7 @@ public class Wallet {
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id",referencedColumnName = "customer_id")
+    @JoinColumn(name = "customer_id")
     private Customer customer;
 
 }
